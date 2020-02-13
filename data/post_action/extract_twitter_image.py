@@ -44,10 +44,11 @@ def load_image_ids(img_root):
     files = glob.glob(os.path.join(img_root, '*', '*.jpg'))
     for name in files:
         idx = name.split(".")[0]
-        pathXid.append(
-            (
-                name,
-                idx))
+        try:
+            cv2.imread(name)
+            pathXid.append((name, idx))
+        except:
+            pass
     return pathXid
 
 
