@@ -13,7 +13,7 @@ FIELDNAMES = ["img_id", "img_h", "img_w", "objects_id", "objects_conf",
               "attrs_id", "attrs_conf", "num_boxes", "boxes", "features"]
 
 
-def load_obj_tsv(fname, topk=None):
+def load_obj_tsv(fname, topk=None, post_ids=None, twitter_ids=None):
     """Load object features from tsv file.
 
     :param fname: The path to the tsv file.
@@ -28,6 +28,12 @@ def load_obj_tsv(fname, topk=None):
     with open(fname) as f:
         reader = csv.DictReader(f, FIELDNAMES, delimiter="\t")
         for i, item in enumerate(reader):
+            item['img_id'] = item['img_id'].split('/')[-1]
+
+            if twitter_ids is not None:
+                if not any(np.in1d(twitter_ids, [item['img_id']])):
+                    continue
+                item['img_id'] = np.array(post_ids)[np.in1d(twitter_ids, [item['img_id']])][0]
 
             for key in ['img_h', 'img_w', 'num_boxes']:
                 item[key] = int(item[key])
