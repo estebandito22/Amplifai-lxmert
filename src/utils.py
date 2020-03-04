@@ -13,7 +13,7 @@ FIELDNAMES = ["img_id", "img_h", "img_w", "objects_id", "objects_conf",
               "attrs_id", "attrs_conf", "num_boxes", "boxes", "features"]
 
 
-def load_obj_tsv(fname, topk=None, post_ids=None, twitter_ids=None):
+def load_obj_tsv(fname, topk=None, id2datum=None):
     """Load object features from tsv file.
 
     :param fname: The path to the tsv file.
@@ -22,6 +22,9 @@ def load_obj_tsv(fname, topk=None, post_ids=None, twitter_ids=None):
     :return: A list of image object features where each feature is a dict.
         See FILENAMES above for the keys in the feature dict.
     """
+    if id2datum is not None:
+        twitter_ids = [str(x['twitter_id']) for x in id2datum.values()]
+        twitterid2postid = {str(v['twitter_id']): k for k, v in id2datum.items()}
     data = []
     start_time = time.time()
     print("Start to load Faster-RCNN detected objects from %s" % fname)
@@ -30,10 +33,11 @@ def load_obj_tsv(fname, topk=None, post_ids=None, twitter_ids=None):
         for i, item in enumerate(reader):
             item['img_id'] = item['img_id'].split('/')[-1]
 
-            if twitter_ids is not None:
-                if not any(np.in1d(twitter_ids, [item['img_id']])):
+            if id2datum is not None:
+                # if not any(np.in1d(twitter_ids, [item['img_id']])):
+                if not item['img_id'] in twitter_ids:
                     continue
-                item['img_id'] = np.array(post_ids)[np.in1d(twitter_ids, [item['img_id']])][0]
+                item['img_id'] = twitterid2postid[item['img_id']]
 
             for key in ['img_h', 'img_w', 'num_boxes']:
                 item[key] = int(item[key])

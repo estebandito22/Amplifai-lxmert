@@ -99,8 +99,7 @@ class PostActionTorchDataset(Dataset):
             img_data.extend(load_obj_tsv(
                 os.path.join(POST_ACTION_IMGFEAT_ROOT, '%s_obj36.tsv' % (SPLIT2NAME[split])),
                 topk=load_topk,
-                post_ids=[x for x in list(self.raw_dataset.id2datum.keys())],
-                twitter_ids=[x['twitter_id'] for x in list(self.raw_dataset.id2datum.values())]))
+                id2datum=self.raw_dataset.id2datum))
 
         # Convert img list to dict
         self.imgid2img = {}

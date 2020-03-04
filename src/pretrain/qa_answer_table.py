@@ -95,7 +95,10 @@ def load_lxmert_qa(path, model, label2ans):
     :return:
     """
     print("Load QA pre-trained LXMERT from %s " % path)
-    loaded_state_dict = torch.load("%s_LXRT.pth" % path)
+    if torch.cuda.is_available():
+        loaded_state_dict = torch.load("%s_LXRT.pth" % path)
+    else:
+        loaded_state_dict = torch.load("%s_LXRT.pth" % path, map_location=torch.device('cpu'))
     model_state_dict = model.state_dict()
 
     # Handle Multi-GPU pre-training --> Single GPU fine-tuning
@@ -125,6 +128,8 @@ def load_lxmert_qa(path, model, label2ans):
     unload = 0
     if type(label2ans) is list:
         label2ans = {label: ans for label, ans in enumerate(label2ans)}
+    elif type(label2ans) is dict:
+        label2ans = {int(label): ans for label, ans in label2ans.items()}
     for label, ans in label2ans.items():
         new_ans = answer_table.convert_ans(ans)
         if answer_table.used(new_ans):
