@@ -8,7 +8,7 @@ SPLIT2DIR = {
     'train': 'train',
 }
 
-import os, sys, glob
+import os, sys, glob, json
 
 sys.path.insert(0, BUTD_ROOT + "/tools")
 os.environ['GLOG_minloglevel'] = '2'
@@ -38,12 +38,15 @@ MIN_BOXES = 36
 MAX_BOXES = 36
 
 
-def load_image_ids(img_root):
+def load_image_ids(img_root, filter_ids):
     """images in the same directory are in the same split"""
     pathXid = []
     files = glob.glob(os.path.join(img_root, '*', '*.jpg'))
     for name in files:
         idx = name.split(".")[0]
+        tid = idx.split('/')[-1]
+        if tid not in filter_ids and filter_ids is not None:
+            continue
         try:
             cv2.imread(name)
             pathXid.append((name, idx))
@@ -156,6 +159,7 @@ def parse_args():
     parser.add_argument('--imgroot', type=str, default='/workspace/images/')
     parser.add_argument('--split', type=str, default='valid')
     parser.add_argument('--caffemodel', type=str, default='./resnet101_faster_rcnn_final_iter_320000.caffemodel')
+    parser.add_argument('--filter_ids', type=str)
 
     args = parser.parse_args()
     return args
@@ -169,6 +173,12 @@ if __name__ == '__main__':
     args.prototxt = BUTD_ROOT + "models/vg/ResNet-101/faster_rcnn_end2end_final/test.prototxt"
     args.outfile = "%s_obj36.tsv" % args.split
 
+    if args.filter_ids is not None:
+        with open(args.filter_ids, 'r') as f:
+            filter_ids = json.load(f)
+    else:
+        filter_ids = None
+
     print('Called with args:')
     print(args)
 
@@ -180,7 +190,7 @@ if __name__ == '__main__':
     assert cfg.TEST.HAS_RPN
 
     # Load image ids, need modification for new datasets.
-    image_ids = load_image_ids(args.imgroot)
+    image_ids = load_image_ids(args.imgroot, filter_ids)
 
     # Generate TSV files, noramlly do not need to modify
     generate_tsv(args.prototxt, args.caffemodel, image_ids, args.outfile)
